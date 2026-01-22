@@ -1,0 +1,89 @@
+class ChessGame:
+    def __init__(self):
+        self.board = self.create_board()
+        self.turn = "white"
+
+    def create_board(self):
+        return [
+            ["r", "n", "b", "q", "k", "b", "n", "r"],
+            ["p"] * 8,
+            [" "] * 8,
+            [" "] * 8,
+            [" "] * 8,
+            [" "] * 8,
+            ["P"] * 8,
+            ["R", "N", "B", "Q", "K", "B", "N", "R"]
+        ]
+
+    def print_board(self):
+        print("\n  a b c d e f g h")
+        for i, row in enumerate(self.board):
+            print(8 - i, end=" ")
+            for piece in row:
+                print(piece, end=" ")
+            print(8 - i)
+        print("  a b c d e f g h\n")
+
+    def algebra_to_index(self, pos):
+        col = ord(pos[0]) - ord('a')
+        row = 8 - int(pos[1])
+        return row, col
+
+    def is_valid_move(self, start, end):
+        sr, sc = start
+        er, ec = end
+        piece = self.board[sr][sc]
+
+        if piece == " ":
+            return False
+
+        if self.turn == "white" and piece.islower():
+            return False
+        if self.turn == "black" and piece.isupper():
+            return False
+
+        target = self.board[er][ec]
+        if target != " ":
+            if piece.isupper() and target.isupper():
+                return False
+            if piece.islower() and target.islower():
+                return False
+
+        return True  # simplified (no deep rule enforcement)
+
+    def move_piece(self, start, end):
+        sr, sc = start
+        er, ec = end
+        self.board[er][ec] = self.board[sr][sc]
+        self.board[sr][sc] = " "
+
+    def switch_turn(self):
+        self.turn = "black" if self.turn == "white" else "white"
+
+    def play(self):
+        while True:
+            self.print_board()
+            print(f"{self.turn.capitalize()}'s turn")
+            move = input("Enter move (e.g. e2 e4) or 'quit': ")
+
+            if move.lower() == "quit":
+                print("Game ended.")
+                break
+
+            try:
+                start_str, end_str = move.split()
+                start = self.algebra_to_index(start_str)
+                end = self.algebra_to_index(end_str)
+            except:
+                print("Invalid input format.")
+                continue
+
+            if self.is_valid_move(start, end):
+                self.move_piece(start, end)
+                self.switch_turn()
+            else:
+                print("Invalid move.")
+
+
+if __name__ == "__main__":
+    ChessGame().play()
