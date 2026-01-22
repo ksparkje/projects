@@ -1,0 +1,97 @@
+import json
+import os
+from datetime import datetime
+
+DATA_FILE = "diablo4_grind_data.json"
+
+
+class GrindTracker:
+    def __init__(self):
+        self.data = self.load_data()
+
+    def load_data(self):
+        if os.path.exists(DATA_FILE):
+            with open(DATA_FILE, "r") as f:
+                return json.load(f)
+        return {}
+
+    def save_data(self):
+        with open(DATA_FILE, "w") as f:
+            json.dump(self.data, f, indent=4)
+
+    def add_session(self, activity, gold_earned, repair_cost, minutes, runs):
+        if activity not in self.data:
+            self.data[activity] = {
+                "total_gold": 0,
+                "total_repairs": 0,
+                "total_minutes": 0,
+                "total_runs": 0,
+                "sessions": []
+            }
+
+        net_gold = gold_earned - repair_cost
+
+        self.data[activity]["total_gold"] += net_gold
+        self.data[activity]["total_repairs"] += repair_cost
+        self.data[activity]["total_minutes"] += minutes
+        self.data[activity]["total_runs"] += runs
+
+        self.data[activity]["sessions"].append({
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "gold_earned": gold_earned,
+            "repair_cost": repair_cost,
+            "net_gold": net_gold,
+            "minutes": minutes,
+            "runs": runs
+        })
+
+        self.save_data()
+        print(f"Session saved: {net_gold:,} gold net")
+
+    def show_stats(self):
+        if not self.data:
+            print("No data yet.")
+            return
+
+        print("\n=== Diablo 4 Grind Stats ===")
+        for activity, stats in self.data.items():
+            hours = stats["total_minutes"] / 60
+            gph = stats["total_gold"] / hours if hours > 0 else 0
+            gpr = stats["total_gold"] / stats["total_runs"] if stats["total_runs"] > 0 else 0
+
+            print(f"\nActivity: {activity}")
+            print(f" Total Gold: {stats['total_gold']:,}")
+            print(f" Total Time: {hours:.2f} hrs")
+            print(f" Total Runs: {stats['total_runs']}")
+            print(f" Gold / Hour: {gph:,.0f}")
+            print(f" Gold / Run: {gpr:,.0f}")
+
+    def main_menu(self):
+        while True:
+            print("\n1. Add grind session")
+            print("2. View stats")
+            print("3. Quit")
+
+            choice = input("Choose an option: ")
+
+            if choice == "1":
+                activity = input("Activity (e.g. NMD Tier 80, Helltide): ")
+                gold = int(input("Gold earned: "))
+                repairs = int(input("Repair cost: "))
+                minutes = int(input("Minutes spent: "))
+                runs = int(input("Number of runs: "))
+                self.add_session(activity, gold, repairs, minutes, runs)
+
+            elif choice == "2":
+                self.show_stats()
+
+            elif choice == "3":
+                print("Good luck grinding, Nephalem.")
+                break
+
+            else:
+                print("Invalid option.")
+
+
+if __name__ == "__main__":
+    GrindTracker().main_menu()
