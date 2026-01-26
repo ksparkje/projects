@@ -1,0 +1,39 @@
+# Folder containing your videos and .srt files
+$folder = "\\replay_synology\video\Shows\   "  # <-- change this to your folder path
+Set-Location $folder
+
+# Loop through all mp4 and mkv files
+Get-ChildItem -Filter *.mp4 | ForEach-Object {
+    $video = $_.FullName
+    $baseName = $_.BaseName
+    $srtFile = Join-Path $folder ($baseName + ".ko.srt")
+    
+    # Check if the SRT exists
+    if (Test-Path $srtFile) {
+        $outputFile = Join-Path $folder ($baseName + "_burned.mp4")
+        Write-Output "Processing $video with $srtFile..."
+        
+        # ffmpeg command
+        & ffmpeg -i $video -vf "subtitles='$srtFile':force_style='BackColour=&H00000000,Outline=1,Shadow=0'" -c:a copy $outputFile
+    } else {
+        Write-Output "No matching SRT found for $video, skipping..."
+    }
+}
+
+# Repeat for MKV files
+Get-ChildItem -Filter *.mkv | ForEach-Object {
+    $video = $_.FullName
+    $baseName = $_.BaseName
+    $srtFile = Join-Path $folder ($baseName + ".ko.srt")
+    
+    if (Test-Path $srtFile) {
+        $outputFile = Join-Path $folder ($baseName + "_burned.mkv")
+        Write-Output "Processing $video with $srtFile..."
+        
+        & ffmpeg -i $video -vf "subtitles='$srtFile':force_style='BackColour=&H00000000,Outline=1,Shadow=0'" -c:a copy $outputFile
+    } else {
+        Write-Output "No matching SRT found for $video, skipping..."
+    }
+}
+
+Write-Output "All videos processed! Burned files have '_burned' suffix."
